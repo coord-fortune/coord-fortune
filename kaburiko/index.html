@@ -1,0 +1,1076 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>かぶりこ度診断</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+      background: #fdf5e6;
+      min-height: 100vh;
+      color: #3d2b1f;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 20px 24px 60px;
+    }
+
+    .header {
+      text-align: center;
+      padding: 40px 0 16px;
+    }
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #5d4037;
+      line-height: 1.5;
+    }
+    .header p {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #999;
+      line-height: 1.6;
+    }
+    .header .chara {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 16px;
+    }
+    .chara-circle {
+      width: 160px;
+      height: 160px;
+      background: #f0d9a8;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .chara-circle img {
+      width: 150px;
+      height: 150px;
+      object-fit: contain;
+    }
+    .deco {
+      position: absolute;
+      font-size: 1rem;
+      opacity: 0.7;
+    }
+    .deco-tl { top: -8px; left: -16px; }
+    .deco-tr { top: 0px; right: -20px; font-size: 0.8rem; }
+    .deco-bl { bottom: 8px; left: -20px; font-size: 0.8rem; }
+    .deco-br { bottom: -4px; right: -12px; }
+
+    .progress-wrap {
+      background: #e8d5b0;
+      border-radius: 20px;
+      height: 10px;
+      margin: 16px 0 8px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #d4851a, #b85c10);
+      border-radius: 20px;
+      transition: width 0.4s ease;
+    }
+    .progress-text {
+      text-align: right;
+      font-size: 0.8rem;
+      color: #999;
+      margin-bottom: 20px;
+    }
+
+    .question-card {
+      background: white;
+      border-radius: 20px;
+      padding: 28px 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+    .question-number {
+      font-size: 0.8rem;
+      color: #c47010;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+    .question-text {
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1.6;
+      color: #333;
+      margin-bottom: 24px;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .option-btn {
+      background: #fdf5e6;
+      border: 2px solid #e0c88a;
+      border-radius: 14px;
+      padding: 14px 18px;
+      text-align: left;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #555;
+      line-height: 1.4;
+    }
+    .option-btn:hover {
+      background: #f5e8c0;
+      border-color: #c47010;
+      color: #333;
+      transform: translateY(-1px);
+    }
+    .option-btn.selected {
+      background: #c47010;
+      border-color: #a35a08;
+      color: white;
+      font-weight: 700;
+    }
+
+    .next-btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #d4851a, #b85c10);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+      letter-spacing: 1px;
+    }
+    .next-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+    .next-btn:disabled { background: #ddd; cursor: not-allowed; transform: none; }
+
+    /* ショップフッター */
+    .shop-footer {
+      margin-top: 40px;
+      padding: 24px 0 10px;
+      text-align: center;
+      border-top: 1px solid #e0c88a;
+    }
+    .shop-title {
+      font-size: 0.82rem;
+      color: #a07850;
+      margin-bottom: 14px;
+      letter-spacing: 1px;
+    }
+    .shop-links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    .shop-btn {
+      display: inline-block;
+      padding: 11px 24px;
+      border-radius: 50px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .shop-btn.booth {
+      background: #f5a623;
+      color: white;
+    }
+    .shop-btn.line {
+      background: #06c755;
+      color: white;
+    }
+    .shop-btn:hover { opacity: 0.85; transform: translateY(-2px); }
+
+    /* 結果画面 */
+    #result-screen { display: none; }
+
+    .result-hero {
+      background: linear-gradient(135deg, #c47010, #8b3e08);
+      border-radius: 24px;
+      padding: 32px 24px;
+      text-align: center;
+      color: white;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 24px rgba(231,111,81,0.35);
+    }
+    .result-hero .label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      opacity: 0.85;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+    .result-type {
+      font-size: 3.2rem;
+      font-weight: 900;
+      letter-spacing: 6px;
+      margin-bottom: 4px;
+    }
+    .result-name {
+      font-size: 1.5rem;
+      font-weight: 900;
+      margin-bottom: 14px;
+    }
+    .result-keywords {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    .keyword {
+      background: rgba(255,255,255,0.25);
+      color: white;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 50px;
+    }
+
+    .result-card {
+      background: white;
+      border-radius: 20px;
+      padding: 22px 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+      margin-bottom: 14px;
+    }
+    .result-card h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #c47010;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .result-card p {
+      font-size: 0.93rem;
+      line-height: 1.8;
+      color: #555;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .two-col .result-card {
+      margin-bottom: 0;
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tag {
+      font-size: 0.82rem;
+      padding: 5px 12px;
+      border-radius: 50px;
+      font-weight: 700;
+    }
+    .tag.green { background: #e8f5e9; color: #2e7d32; }
+    .tag.red { background: #fce4ec; color: #c62828; }
+    .tag.blue { background: #e3f2fd; color: #1565c0; }
+    .tag.purple { background: #f3e5f5; color: #6a1b9a; }
+
+    .compat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .compat-item {
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+    }
+    .compat-item.best {
+      background: #e8f5e9;
+      border: 1.5px solid #a5d6a7;
+    }
+    .compat-item.good {
+      background: #fff8e1;
+      border: 1.5px solid #ffe082;
+    }
+    .compat-item.bad {
+      background: #fce4ec;
+      border: 1.5px solid #f48fb1;
+    }
+    .compat-item .compat-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #888;
+      margin-bottom: 4px;
+    }
+    .compat-item .compat-type {
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: #888;
+      margin-top: 2px;
+    }
+    .compat-item .compat-name {
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #333;
+    }
+
+    .image-card {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .image-card h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #f4a261;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    .image-card img {
+      width: 100%;
+      border-radius: 12px;
+      display: block;
+    }
+    .image-card .img-note {
+      font-size: 0.78rem;
+      color: #bbb;
+      margin-top: 8px;
+    }
+    .image-missing {
+      background: #fff8f0;
+      border: 2px dashed #f4a261;
+      border-radius: 12px;
+      padding: 20px;
+      font-size: 0.85rem;
+      color: #aaa;
+      line-height: 1.6;
+    }
+
+    .retry-btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: white;
+      color: #b85c10;
+      border: 2px solid #b85c10;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+      margin-top: 8px;
+    }
+    .retry-btn:hover { background: #fff0ee; }
+
+    /* スタート画面 */
+    #start-screen { text-align: center; }
+    .start-card {
+      background: white;
+      border-radius: 24px;
+      padding: 0;
+      margin-bottom: 0;
+    }
+    .badge-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0 8px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      background: #f5e8c0;
+      color: #7a4a10;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 50px;
+      border: 1.5px solid #c8a050;
+    }
+    .start-btn {
+      display: block;
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #d4851a, #b85c10);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+      box-shadow: 0 6px 20px rgba(232,118,94,0.4);
+      margin-top: 24px;
+    }
+    .start-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+    .start-note {
+      font-size: 0.75rem;
+      color: #bbb;
+      margin-top: 12px;
+      text-align: center;
+    }
+    .page-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 24px;
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #c47010;
+    }
+    .dot.inactive { background: #d8c89a; }
+
+    .fade-in {
+      animation: fadeIn 0.35s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="chara">
+      <div class="chara-circle">
+        <img src="kaburiko_16p_icon.png" alt="かぶりこちゃん" onerror="this.style.display='none'">
+      </div>
+      <span class="deco deco-tl">✦</span>
+      <span class="deco deco-tr">♡</span>
+      <span class="deco deco-bl">☆</span>
+      <span class="deco deco-br">✧</span>
+    </div>
+    <h1>あなたの<br><strong>かぶりこ度</strong><br>診断</h1>
+    <p>あなたの性格タイプを<br>20問で診断するよ！</p>
+  </div>
+
+  <!-- スタート画面 -->
+  <div id="start-screen">
+    <div class="badge-row">
+      <span class="badge">📝 全20問</span>
+      <span class="badge">⏱️ 約3分</span>
+      <span class="badge">✦ 16タイプ</span>
+    </div>
+    <button class="start-btn" onclick="startQuiz()">🔮 さっそく診断してみる！</button>
+    <p class="start-note">※ 診断結果はお楽しみの範囲です</p>
+    <div class="page-dots">
+      <div class="dot"></div>
+      <div class="dot inactive"></div>
+      <div class="dot inactive"></div>
+      <div class="dot inactive"></div>
+    </div>
+  </div>
+
+  <!-- 問題画面 -->
+  <div id="quiz-screen" style="display:none;">
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+    </div>
+    <div class="progress-text" id="progress-text">1 / 20</div>
+
+    <div class="question-card fade-in" id="question-card">
+      <div class="question-number" id="q-number">Q1</div>
+      <div class="question-text" id="q-text"></div>
+      <div class="options" id="q-options"></div>
+    </div>
+
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()" disabled>つぎへ →</button>
+  </div>
+
+  <!-- 結果画面 -->
+  <div id="result-screen">
+
+    <div class="result-hero fade-in">
+      <div class="label">✨ あなたのかぶりこタイプ ✨</div>
+      <div class="result-name" id="res-name" style="font-size:1.8rem;"></div>
+      <div id="res-degree" style="font-size:1.2rem; font-weight:900; margin: 8px 0; opacity:0.95;"></div>
+      <div id="res-type" style="font-size:0.85rem; opacity:0.75; margin-bottom:10px; font-weight:700; letter-spacing:2px;"></div>
+      <div class="result-keywords" id="res-keywords"></div>
+    </div>
+
+    <div class="result-card">
+      <h3>💬 どんな人？</h3>
+      <p id="res-desc"></p>
+    </div>
+
+    <div class="result-card" style="background: #fff8f5; border: 2px solid #f9c5b8;">
+      <h3>🧥 かぶりこちゃんからひとこと</h3>
+      <p id="res-advice" style="font-style: italic; color: #c87965;"></p>
+    </div>
+
+    <div class="two-col">
+      <div class="result-card">
+        <h3>✨ 得意なこと</h3>
+        <div class="tag-list" id="res-strengths"></div>
+      </div>
+      <div class="result-card">
+        <h3>💦 苦手なこと</h3>
+        <div class="tag-list" id="res-weaknesses"></div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <h3>🌟 こんな場面で輝く</h3>
+      <p id="res-scene"></p>
+    </div>
+
+    <div class="result-card">
+      <h3>💞 かぶりこ相性診断</h3>
+      <div class="compat-grid" id="res-compat"></div>
+    </div>
+
+    <div class="image-card">
+      <h3>🧥 かぶりこちゃんの16タイプ</h3>
+      <div id="image-area"></div>
+      <div class="img-note">↑ 自分のタイプを探してみてね！</div>
+    </div>
+
+    <button class="retry-btn" onclick="resetQuiz()">もう一回やってみる 🔄</button>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  // E/I
+  { axis: 'EI', text: '週末の過ごし方、どっちが自分に近い？', options: [
+    { label: '友達や家族と賑やかに過ごしたい！', score: 2 },
+    { label: 'どちらかといえば外で人と過ごすのが好き', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'どちらかといえば家でのんびりしたい', score: -1 },
+    { label: '一人でゆっくり過ごすのが最高〜', score: -2 },
+  ]},
+  { axis: 'EI', text: '初対面の人と話すとき、どっちに近い？', options: [
+    { label: 'すぐ打ち解けて話せる方', score: 2 },
+    { label: 'わりとすぐ話せる', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: '少し時間がかかる方', score: -1 },
+    { label: 'かなり時間がかかる…', score: -2 },
+  ]},
+  { axis: 'EI', text: '疲れたとき、どうやって元気を取り戻す？', options: [
+    { label: '人と話したり出かけたりして回復する', score: 2 },
+    { label: 'どちらかといえば人と過ごす方が元気になる', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'どちらかといえば一人の時間が必要', score: -1 },
+    { label: '絶対一人でいないと回復しない！', score: -2 },
+  ]},
+  { axis: 'EI', text: 'グループの中での自分って？', options: [
+    { label: '自分から話しかけて場を盛り上げる方', score: 2 },
+    { label: 'わりと積極的に話す方', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'どちらかといえば聞き役になりがち', score: -1 },
+    { label: 'だいたい観察役・聞き役', score: -2 },
+  ]},
+  { axis: 'EI', text: '予定のない休日、どう感じる？', options: [
+    { label: 'どこか出かけたくなってソワソワする', score: 2 },
+    { label: 'わりと外に出たい気分になる', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'わりと家にいたい', score: -1 },
+    { label: '家でのんびりが最高すぎる', score: -2 },
+  ]},
+
+  // S/N
+  { axis: 'SN', text: '新しいことを始めるとき、どっちに近い？', options: [
+    { label: 'まず実績や手順をしっかり調べてから始める', score: 2 },
+    { label: 'どちらかといえば情報収集を先にする', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'どちらかといえば直感でとりあえず始める', score: -1 },
+    { label: 'ひらめいたらすぐ動く！', score: -2 },
+  ]},
+  { axis: 'SN', text: '物事を考えるとき、どっちが得意？', options: [
+    { label: '具体的・現実的に考える方が得意', score: 2 },
+    { label: 'どちらかといえば具体的に考える', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'どちらかといえばアイデアや可能性を広げる', score: -1 },
+    { label: 'いつも「こうなったら？」って妄想してる', score: -2 },
+  ]},
+  { axis: 'SN', text: '会話の中で、どっちが楽しい？', options: [
+    { label: '具体的な出来事や事実について話す方が楽しい', score: 2 },
+    { label: 'どちらかといえば具体的な話が好き', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'どちらかといえば将来や仮定の話が好き', score: -1 },
+    { label: '「もしも〜だったら？」な話が大好き！', score: -2 },
+  ]},
+  { axis: 'SN', text: '自分の思考スタイルは？', options: [
+    { label: '今ここにある現実や事実を大切にする', score: 2 },
+    { label: 'どちらかといえば現実的', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'どちらかといえば未来や可能性を見る', score: -1 },
+    { label: 'いつも「もっとこうなれば」って考えてる', score: -2 },
+  ]},
+  { axis: 'SN', text: '仕事や作業のやり方は？', options: [
+    { label: '実績のある確実な方法でやりたい', score: 2 },
+    { label: 'どちらかといえば慣れたやり方が好き', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'どちらかといえば新しいやり方を試したい', score: -1 },
+    { label: '常に新しいアプローチを試したい！', score: -2 },
+  ]},
+
+  // T/F
+  { axis: 'TF', text: '誰かに意見を伝えるとき、何を優先する？', options: [
+    { label: '正確な事実や論理を優先して伝える', score: 2 },
+    { label: 'どちらかといえば論理を優先する', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'どちらかといえば相手の気持ちを優先する', score: -1 },
+    { label: '相手が傷つかないよう気持ちを最優先にする', score: -2 },
+  ]},
+  { axis: 'TF', text: '友達が悩みを相談してきた。どうする？', options: [
+    { label: '原因を分析して解決策を提案する', score: 2 },
+    { label: 'どちらかといえばアドバイスをする', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'どちらかといえばまず共感して話を聞く', score: -1 },
+    { label: 'とにかく気持ちに寄り添うことが大事！', score: -2 },
+  ]},
+  { axis: 'TF', text: '何かを決めるとき、どっちに頼る？', options: [
+    { label: 'データや論理で判断する', score: 2 },
+    { label: 'どちらかといえば論理重視', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'どちらかといえば感情・価値観重視', score: -1 },
+    { label: '自分や周りの気持ちで判断することが多い', score: -2 },
+  ]},
+  { axis: 'TF', text: '批判や指摘を受けたとき、どう感じる？', options: [
+    { label: '冷静に受け止めて改善点として考えられる', score: 2 },
+    { label: 'わりとサラっと受け流せる', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'わりと気にしてしまう方', score: -1 },
+    { label: 'かなり傷ついてしまう…', score: -2 },
+  ]},
+  { axis: 'TF', text: 'グループで揉めたとき、どうする？', options: [
+    { label: '論理的に問題を整理して解決しようとする', score: 2 },
+    { label: 'どちらかといえば事実整理を優先する', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'どちらかといえば全員の気持ちを和らげようとする', score: -1 },
+    { label: '全員が納得できるよう感情面から調整したい', score: -2 },
+  ]},
+
+  // J/P
+  { axis: 'JP', text: '旅行の計画を立てるとき、どっちに近い？', options: [
+    { label: '事前にスケジュールをしっかり組みたい', score: 2 },
+    { label: 'わりと計画を立てておきたい', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'わりと行き当たりばったりが好き', score: -1 },
+    { label: 'ノープランで現地で決める方が楽しい！', score: -2 },
+  ]},
+  { axis: 'JP', text: '締め切りや期限について、どっちに近い？', options: [
+    { label: '余裕を持って前もって終わらせる', score: 2 },
+    { label: 'わりと早めに終わらせることが多い', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'わりとギリギリになることが多い', score: -1 },
+    { label: 'いつもギリギリラストスパートタイプ笑', score: -2 },
+  ]},
+  { axis: 'JP', text: '部屋や持ち物の管理は？', options: [
+    { label: '整理整頓されていないと落ち着かない', score: 2 },
+    { label: 'わりと整理されている方', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'わりと散らかりがち', score: -1 },
+    { label: 'いつもカオス…でも自分ではわかってる', score: -2 },
+  ]},
+  { axis: 'JP', text: '予定が急に変わったとき、どう感じる？', options: [
+    { label: 'かなりストレスを感じる', score: 2 },
+    { label: 'わりと気になる', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'わりと柔軟に対応できる', score: -1 },
+    { label: '全然気にしない！むしろ楽しい', score: -2 },
+  ]},
+  { axis: 'JP', text: '物事を進めるとき、どっちが心地いい？', options: [
+    { label: '早めに決定してスッキリしたい', score: 2 },
+    { label: 'わりと早く決めたい方', score: 1 },
+    { label: 'どちらともいえない', score: 0 },
+    { label: 'わりと選択肢を残しておきたい', score: -1 },
+    { label: 'できるだけオープンにしておきたい派', score: -2 },
+  ]},
+];
+
+const types = {
+  'ISFJ': {
+    name: '真の純情かぶりこちゃん', degree: 100,
+    desc: '恥ずかしがり屋で心優しい、元祖・殻ごもり100%タイプ。大切な人を守ることに全力を注ぐ、静かなる守り手。縁の下でいつも誰かを支えてるよ！',
+    keywords: ['かぶりこ度100%', '思いやり', '献身的', '純情'],
+    strengths: ['思いやり', '細やかな気配り', '忍耐力', '誠実さ'],
+    weaknesses: ['自己主張が苦手', '変化への抵抗感', '抱え込みやすい'],
+    scene: '誰かをサポートするとき、チームの空気を整えるとき、細かいことに気配りが必要なときに輝く✨',
+    advice: '「わ、私とまったく同じ…！なんだか一緒にいるだけで、実家のような安心感があります…（きゅん）」',
+    compat: [
+      { type: 'ESFP', name: 'おまつりかぶりこ', level: 'best' },
+      { type: 'ESTP', name: 'おてんばかぶりこ', level: 'best' },
+      { type: 'ENTP', name: 'へりくつかぶりこ', level: 'bad' },
+    ]
+  },
+  'INFJ': {
+    name: 'お察しかぶりこちゃん', degree: 80,
+    desc: '優しさと思いやりはそのままに、少しミステリアスな未来予測派。物静かで深い洞察力を持つ理想主義者。人の気持ちを自然と読み取る、希少な存在！',
+    keywords: ['かぶりこ度80%', '洞察力', '共感', 'ミステリアス'],
+    strengths: ['共感力', '洞察力', '創造性', '粘り強さ'],
+    weaknesses: ['疲れやすい', '完璧主義になりやすい', '秘密主義'],
+    scene: '誰かに寄り添うとき、長期的なビジョンを描くとき、人の本質を見抜くときに本領発揮✨',
+    advice: '「何も言わなくても、私の考えてること全部わかってくれてますよね…！？エスパーさんですか…？」',
+    compat: [
+      { type: 'ENFP', name: 'ゆめみるかぶりこ', level: 'best' },
+      { type: 'ENTP', name: 'へりくつかぶりこ', level: 'best' },
+      { type: 'ESTP', name: 'おてんばかぶりこ', level: 'bad' },
+    ]
+  },
+  'ESFJ': {
+    name: 'お世話やきかぶりこちゃん', degree: 80,
+    desc: '殻から飛び出して、みんなをおもてなししたくなっちゃうお姉さん。思いやりがあって社交的な、みんなの太陽的存在！',
+    keywords: ['かぶりこ度80%', '社交的', '思いやり', '世話好き'],
+    strengths: ['コミュニケーション力', '協調性', '思いやり', '気配り'],
+    weaknesses: ['批判に弱い', '他人の評価が気になる', '自分を後回しにしやすい'],
+    scene: '人と人をつなぐとき、チームの雰囲気を盛り上げるとき、誰かが困っているときに手を差し伸べるときに輝く✨',
+    advice: '「いつも私の殻の前に、お菓子とか置いていってくれますよね。優しくて、本当にお母さんみたいです…！」',
+    compat: [
+      { type: 'ISFP', name: 'アーティストかぶりこ', level: 'best' },
+      { type: 'ISTP', name: '職人肌かぶりこ', level: 'best' },
+      { type: 'INTP', name: 'ひきこもり学者かぶりこ', level: 'bad' },
+    ]
+  },
+  'ISTJ': {
+    name: 'しっかりかぶりこちゃん', degree: 80,
+    desc: 'マイペースだけど、やるときはやる、ルールを守る生真面目さん。実直で責任感の強い、信頼の厚いタイプ。縁の下の力持ち！',
+    keywords: ['かぶりこ度80%', '責任感', '信頼性', '生真面目'],
+    strengths: ['信頼性', '責任感', '几帳面さ', '粘り強さ'],
+    weaknesses: ['変化が苦手', '融通が利きにくい', '感情表現が苦手'],
+    scene: 'ルールや仕組みを守るとき、長期的なタスクをコツコツ進めるとき、チームの安定を支えるときに本領発揮✨',
+    advice: '「あなたがスケジュールをきっちり立ててくれるから、のんびり屋の私も迷子にならずにすんでます！」',
+    compat: [
+      { type: 'ENFJ', name: 'にこにこリーダーかぶりこ', level: 'best' },
+      { type: 'ESFP', name: 'おまつりかぶりこ', level: 'best' },
+      { type: 'ENFP', name: 'ゆめみるかぶりこ', level: 'bad' },
+    ]
+  },
+  'ENFJ': {
+    name: 'にこにこリーダーかぶりこ', degree: 50,
+    desc: 'かぶりこちゃんの優しさを、みんなを引っ張るパワーに変えた姿。カリスマ性があり、人々を自然と引きつけるリーダー！',
+    keywords: ['かぶりこ度50%', 'カリスマ', 'リーダー', '共感力'],
+    strengths: ['コミュニケーション力', 'リーダーシップ', '共感力', '行動力'],
+    weaknesses: ['自己犠牲になりやすい', '批判に敏感', '過干渉になりやすい'],
+    scene: 'チームをまとめるとき、誰かの背中を押すとき、人と人をつなぐときに本領発揮✨',
+    advice: '「いつも笑顔でみんなを引っ張ってくれてすごいです！でも、たまには私の殻の中で休んでいってくださいね？」',
+    compat: [
+      { type: 'ISTJ', name: 'しっかりかぶりこちゃん', level: 'best' },
+      { type: 'INFP', name: 'ロマンチストかぶりこ', level: 'best' },
+      { type: 'ISTP', name: '職人肌かぶりこ', level: 'bad' },
+    ]
+  },
+  'ESTP': {
+    name: 'おてんばかぶりこ', degree: 50,
+    desc: 'じっとしていられない！殻をバットにして遊びに行っちゃう行動派。賢くてエネルギッシュで、鋭い観察力と機転でどんな状況も乗り越える！',
+    keywords: ['かぶりこ度50%', '行動力', 'エネルギッシュ', '機転'],
+    strengths: ['行動力', '観察力', '対応力', '社交性'],
+    weaknesses: ['長期計画が苦手', '衝動的になりやすい', 'ルールが苦手'],
+    scene: '素早い判断が必要なとき、新しい環境に飛び込むとき、その場でトラブルを解決するときに本領発揮✨',
+    advice: '「ひゃあ！急に殻を叩かないでください〜っ！でも、外の世界に連れ出してくれるのはちょっと楽しいかも…」',
+    compat: [
+      { type: 'INFP', name: 'ロマンチストかぶりこ', level: 'best' },
+      { type: 'ISFJ', name: '真の純情かぶりこちゃん', level: 'best' },
+      { type: 'INFJ', name: 'お察しかぶりこちゃん', level: 'bad' },
+    ]
+  },
+  'ESFP': {
+    name: 'おまつりかぶりこ', degree: 50,
+    desc: '嬉しいことへの素直な反応が爆発した、陽気なムードメーカー。自然とスポットライトを浴びる、明るくて楽しい存在！',
+    keywords: ['かぶりこ度50%', '社交的', '楽観的', 'ムードメーカー'],
+    strengths: ['コミュニケーション力', '明るさ', '行動力', '適応力'],
+    weaknesses: ['計画が苦手', '集中力が続かない', '衝動的'],
+    scene: '場を盛り上げるとき、みんなを笑顔にするとき、新しい体験を楽しむときに輝く✨',
+    advice: '「あなたが楽しそうに踊ってるのを見てると、殻の中にいる私も自然と笑顔になっちゃいます！」',
+    compat: [
+      { type: 'ISFJ', name: '真の純情かぶりこちゃん', level: 'best' },
+      { type: 'ISTJ', name: 'しっかりかぶりこちゃん', level: 'best' },
+      { type: 'INTJ', name: '一匹狼かぶりこ', level: 'bad' },
+    ]
+  },
+  'ENFP': {
+    name: 'ゆめみるかぶりこ', degree: 50,
+    desc: '殻の中で妄想が膨らみすぎて、宇宙まで飛んでいっちゃう自由人。情熱的で独創的なムードメーカー。エネルギーが無限大！',
+    keywords: ['かぶりこ度50%', '情熱的', '創造的', '自由人'],
+    strengths: ['コミュニケーション力', '発想力', '熱意', '共感力'],
+    weaknesses: ['飽きやすい', '集中力が続かない', '感情の波が大きい'],
+    scene: '新しいことを始めるとき、人を巻き込むとき、場を盛り上げるときに輝く✨',
+    advice: '「あなたのアイディア、いつもキラキラしててワクワクします！…えっ、殻ごと宇宙旅行に行くんですか！？」',
+    compat: [
+      { type: 'INFJ', name: 'お察しかぶりこちゃん', level: 'best' },
+      { type: 'INTJ', name: '一匹狼かぶりこ', level: 'best' },
+      { type: 'ISTJ', name: 'しっかりかぶりこちゃん', level: 'bad' },
+    ]
+  },
+  'INFP': {
+    name: 'ロマンチストかぶりこ', degree: 50,
+    desc: '殻にこもる天才。感受性が豊かすぎて、ときどきポエマーになる。優しくて創造的な理想主義者！',
+    keywords: ['かぶりこ度50%', '共感力', '理想主義', 'ロマンチスト'],
+    strengths: ['共感力', '創造性', '誠実さ', '柔軟な思考'],
+    weaknesses: ['批判に弱い', '非現実的になりやすい', '優柔不断'],
+    scene: '誰かの気持ちに寄り添うとき、創作活動をするとき、自分の価値観を大切にした選択をするときに輝くよ✨',
+    advice: '「お互い自分の殻が大好き同士ですね…。今度、お揃いの殻の飾り付けについて夜通し語り合いましょう…！」',
+    compat: [
+      { type: 'ESTP', name: 'おてんばかぶりこ', level: 'best' },
+      { type: 'ENFJ', name: 'にこにこリーダーかぶりこ', level: 'best' },
+      { type: 'ESTJ', name: '熱血キャプテンかぶりこ', level: 'bad' },
+    ]
+  },
+  'ISFP': {
+    name: 'アーティストかぶりこ', degree: 50,
+    desc: 'マイペースを極めた結果、自分の世界をアートで表現し始めた。柔軟性と独自の感性を持つ、自由な芸術家タイプ！',
+    keywords: ['かぶりこ度50%', '芸術的', '自由人', 'マイペース'],
+    strengths: ['感受性', '芸術的センス', '柔軟性', '思いやり'],
+    weaknesses: ['計画が苦手', '自己主張が弱い', '競争が苦手'],
+    scene: '自分の感性を活かした創作活動をするとき、自由に動けるとき、誰かに寄り添うときに輝く✨',
+    advice: '「マイペース仲間だ〜！あなたが黙々と素敵な絵を描いてる横で、私はのんびりお昼寝するのが幸せです。」',
+    compat: [
+      { type: 'ESFJ', name: 'お世話やきかぶりこちゃん', level: 'best' },
+      { type: 'ESTJ', name: '熱血キャプテンかぶりこ', level: 'best' },
+      { type: 'ENTJ', name: 'プレジデントかぶりこ', level: 'bad' },
+    ]
+  },
+  'INTP': {
+    name: 'ひきこもり学者かぶりこ', degree: 50,
+    desc: '殻の中でずっとスマホか本を読んでいる、分析大好きなマイペース。豊富な知識と革新的なアイデアを持つ思考家！',
+    keywords: ['かぶりこ度50%', '分析力', '知的好奇心', 'ひきこもり'],
+    strengths: ['論理的思考', '独創性', '客観的分析', '知識の吸収'],
+    weaknesses: ['行動に移すのが遅い', '人の気持ちが読みにくい', '優柔不断'],
+    scene: '複雑な問題を紐解くとき、新しいアイデアを考えるとき、誰も思いつかない視点で物事を見るときに輝くよ✨',
+    advice: '「殻に引きこもって何をしてるんですか…？難しそうな画面が見えますけど、静かに応援してます…！」',
+    compat: [
+      { type: 'ENTJ', name: 'プレジデントかぶりこ', level: 'best' },
+      { type: 'ENFJ', name: 'にこにこリーダーかぶりこ', level: 'best' },
+      { type: 'ESFJ', name: 'お世話やきかぶりこちゃん', level: 'bad' },
+    ]
+  },
+  'INTJ': {
+    name: '一匹狼かぶりこ', degree: 50,
+    desc: '誰にも流されない。殻の強度をコンクリート並みに頑丈にした知性派。想像力と戦略的な思考を持ち、ブレずに進める強さがある！',
+    keywords: ['かぶりこ度50%', '戦略家', '独立心', '一匹狼'],
+    strengths: ['計画力', '集中力', '戦略思考', '自己管理'],
+    weaknesses: ['頑固になりやすい', '感情表現が苦手', '人に頼りにくい'],
+    scene: 'ひとりで深く考えてアイデアを形にするとき、長期プロジェクトを進めるとき、誰も気づいていない問題を解決するときに本領発揮✨',
+    advice: '「ものすごい頑丈な殻ですね…！お近づきになるのは緊張するけど、そのブレないクールさ、憧れます…！」',
+    compat: [
+      { type: 'ENTP', name: 'へりくつかぶりこ', level: 'best' },
+      { type: 'ENFP', name: 'ゆめみるかぶりこ', level: 'best' },
+      { type: 'ESFP', name: 'おまつりかぶりこ', level: 'bad' },
+    ]
+  },
+  'ENTJ': {
+    name: 'プレジデントかぶりこ', degree: 20,
+    desc: '殻を自らぶち破り、世界の頂点を目指す、かぶりこ界のボス。大胆なリーダーシップと強い意志を持ち、目標に向かって力強く進む！',
+    keywords: ['かぶりこ度20%', 'リーダー', '決断力', 'かぶりこ界のボス'],
+    strengths: ['リーダーシップ', '決断力', '目標達成力', '論理的判断'],
+    weaknesses: ['強引になりやすい', '感情を見落とす', '人の意見を聞き流しやすい'],
+    scene: 'チームをまとめるとき、大きなプロジェクトを動かすとき、誰もが迷っているときに方向を示すときに本領発揮✨',
+    advice: '「ま、眩しすぎます…！カリスマすぎて直視できないけど、後ろからこっそりついていかせてください…！」',
+    compat: [
+      { type: 'INTP', name: 'ひきこもり学者かぶりこ', level: 'best' },
+      { type: 'INFP', name: 'ロマンチストかぶりこ', level: 'best' },
+      { type: 'ISFP', name: 'アーティストかぶりこ', level: 'bad' },
+    ]
+  },
+  'ENTP': {
+    name: 'へりくつかぶりこ', degree: 20,
+    desc: '「そもそも殻って必要？」と、かぶりこ概念に論破を挑む確信犯。賢くて好奇心旺盛な思考家。知的な刺激がないと退屈してしまう！',
+    keywords: ['かぶりこ度20%', '議論好き', '革新的', '論破師'],
+    strengths: ['発想力', '議論力', '多角的思考', '応用力'],
+    weaknesses: ['飽きやすい', '細かい作業が苦手', '議論しすぎる'],
+    scene: 'ブレインストーミングや企画会議、誰も考えなかった解決策を出すとき、固定観念を壊すときに輝く✨',
+    advice: '「『殻の存在意義』について論破しないでください〜っ！い、意地悪言わずに仲良くしてください…（うるうる）」',
+    compat: [
+      { type: 'INTJ', name: '一匹狼かぶりこ', level: 'best' },
+      { type: 'INFJ', name: 'お察しかぶりこちゃん', level: 'best' },
+      { type: 'ISFJ', name: '真の純情かぶりこちゃん', level: 'bad' },
+    ]
+  },
+  'ISTP': {
+    name: '職人肌かぶりこ', degree: 20,
+    desc: '恥ずかしがる間もなく、黙々と殻を改造してバイクとか作っちゃう。大胆で実践的な思考を持つ、クールな職人タイプ！',
+    keywords: ['かぶりこ度20%', '実践的', '冷静', '職人'],
+    strengths: ['問題解決力', '冷静さ', '器用さ', '観察眼'],
+    weaknesses: ['感情表現が苦手', '長期計画が苦手', 'コミットメントが苦手'],
+    scene: '実際に手を動かして何かを作るとき、トラブルをその場でサッと解決するとき、効率的な方法を見つけるときに本領発揮✨',
+    advice: '「あ、あの…私の殻、いつの間にかハイテクに大改造されてるんですけど…！？でも、意外と快適かも…？」',
+    compat: [
+      { type: 'ESTJ', name: '熱血キャプテンかぶりこ', level: 'best' },
+      { type: 'ESFJ', name: 'お世話やきかぶりこちゃん', level: 'best' },
+      { type: 'ENFJ', name: 'にこにこリーダーかぶりこ', level: 'bad' },
+    ]
+  },
+  'ESTJ': {
+    name: '熱血キャプテンかぶりこ', degree: 20,
+    desc: 'のんびりなんて許さない！「みんな、シャキッと動きなさい！」秩序と規律を重んじる、しっかり者のリーダータイプ！',
+    keywords: ['かぶりこ度20%', '管理力', '責任感', '熱血'],
+    strengths: ['リーダーシップ', '組織力', '実行力', '責任感'],
+    weaknesses: ['頑固になりやすい', '感情より規則を優先しやすい', '柔軟性が低い'],
+    scene: 'チームや組織を引っ張るとき、複数のタスクを管理するとき、物事を効率化するときに本領発揮✨',
+    advice: '「ひえぇっ、『早く殻から出てきなさい！』って怒られた！でも、あなたについていけば間違いない安心感があります！」',
+    compat: [
+      { type: 'ISTP', name: '職人肌かぶりこ', level: 'best' },
+      { type: 'ISFP', name: 'アーティストかぶりこ', level: 'best' },
+      { type: 'INFP', name: 'ロマンチストかぶりこ', level: 'bad' },
+    ]
+  },
+};
+
+let currentQ = 0;
+let scores = { EI: 0, SN: 0, TF: 0, JP: 0 };
+let selectedScore = null;
+
+function startQuiz() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[currentQ];
+  document.getElementById('q-number').textContent = `Q${currentQ + 1}`;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('progress-text').textContent = `${currentQ + 1} / ${questions.length}`;
+  document.getElementById('progress-bar').style.width = `${(currentQ / questions.length) * 100}%`;
+
+  const optionsEl = document.getElementById('q-options');
+  optionsEl.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt.label;
+    btn.onclick = () => selectOption(i, opt.score);
+    optionsEl.appendChild(btn);
+  });
+
+  selectedScore = null;
+  document.getElementById('next-btn').disabled = true;
+  const card = document.getElementById('question-card');
+  card.classList.remove('fade-in');
+  void card.offsetWidth;
+  card.classList.add('fade-in');
+}
+
+function selectOption(index, score) {
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.option-btn')[index].classList.add('selected');
+  selectedScore = score;
+  document.getElementById('next-btn').disabled = false;
+}
+
+function nextQuestion() {
+  if (selectedScore === null) return;
+  scores[questions[currentQ].axis] += selectedScore;
+  currentQ++;
+  if (currentQ >= questions.length) {
+    showResult();
+  } else {
+    showQuestion();
+  }
+}
+
+function showResult() {
+  document.getElementById('quiz-screen').style.display = 'none';
+  const rs = document.getElementById('result-screen');
+  rs.style.display = 'block';
+
+  const E = scores.EI >= 0 ? 'E' : 'I';
+  const S = scores.SN >= 0 ? 'S' : 'N';
+  const T = scores.TF >= 0 ? 'T' : 'F';
+  const J = scores.JP >= 0 ? 'J' : 'P';
+  const typeCode = E + S + T + J;
+  const type = types[typeCode];
+
+  document.getElementById('res-type').textContent = `（${typeCode}）`;
+  document.getElementById('res-name').textContent = type.name;
+  document.getElementById('res-degree').textContent = `🧥 かぶりこ度 ${type.degree}%`;
+  document.getElementById('res-desc').textContent = type.desc;
+  document.getElementById('res-advice').textContent = type.advice;
+  document.getElementById('res-scene').textContent = type.scene;
+
+  // キーワード
+  const kw = document.getElementById('res-keywords');
+  kw.innerHTML = type.keywords.map(k => `<span class="keyword">#${k}</span>`).join('');
+
+  // 得意・苦手
+  document.getElementById('res-strengths').innerHTML =
+    type.strengths.map(s => `<span class="tag green">${s}</span>`).join('');
+  document.getElementById('res-weaknesses').innerHTML =
+    type.weaknesses.map(s => `<span class="tag red">${s}</span>`).join('');
+
+  // 相性
+  const compat = document.getElementById('res-compat');
+  compat.innerHTML = type.compat.map(c => `
+    <div class="compat-item ${c.level}">
+      <div class="compat-label">${c.level === 'best' ? '💞 最高の相性' : c.level === 'good' ? '👍 相性いい' : '💦 苦手な相手'}</div>
+      <div class="compat-name">${c.name}</div>
+      <div class="compat-type">${c.type}</div>
+    </div>
+  `).join('');
+
+  // 画像
+  const imageArea = document.getElementById('image-area');
+  const img = new Image();
+  img.src = 'kaburiko_16p.png';
+  img.alt = 'かぶりこちゃんかぶりこ度診断';
+  img.style.width = '100%';
+  img.style.borderRadius = '12px';
+  img.onload = () => { imageArea.innerHTML = ''; imageArea.appendChild(img); };
+  img.onerror = () => {
+    imageArea.innerHTML = `<div class="image-missing">
+      🧥 画像を表示するには<br>
+      <strong>kaburiko_16p.png</strong> を<br>
+      このファイルと同じフォルダに入れてね！
+    </div>`;
+  };
+
+  rs.classList.remove('fade-in');
+  void rs.offsetWidth;
+  rs.classList.add('fade-in');
+  window.scrollTo(0, 0);
+}
+
+function resetQuiz() {
+  currentQ = 0;
+  scores = { EI: 0, SN: 0, TF: 0, JP: 0 };
+  selectedScore = null;
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('start-screen').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+</script>
+
+<!-- ショップリンク -->
+<div class="shop-footer">
+  <p class="shop-title">🎀 かぶりこちゃんグッズ</p>
+  <div class="shop-links">
+    <a href="https://kaburiko-studio.booth.pm/" target="_blank" class="shop-btn booth">
+      🛍️ BOOTHで購入
+    </a>
+    <a href="https://store.line.me/stickershop/author/6156502/ja" target="_blank" class="shop-btn line">
+      💬 LINEスタンプ
+    </a>
+  </div>
+</div>
+
+</body>
+</html>
