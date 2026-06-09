@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>かぶりこちゃん占い</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+      background: #fdf5e6;
+      min-height: 100vh;
+      color: #3d2b1f;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 20px 24px 60px;
+    }
+
+    .header {
+      text-align: center;
+      padding: 40px 0 28px;
+    }
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #5d4037;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    .header p {
+      font-size: 0.88rem;
+      color: #999;
+      line-height: 1.6;
+    }
+
+    /* 入力カード */
+    .input-card {
+      background: white;
+      border-radius: 20px;
+      padding: 28px 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+    .input-label {
+      font-size: 0.85rem;
+      color: #c47010;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+      display: block;
+    }
+    .date-inputs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .date-inputs select {
+      flex: 1;
+      padding: 13px 8px;
+      background: #fdf5e6;
+      border: 2px solid #e0c88a;
+      border-radius: 14px;
+      color: #3d2b1f;
+      font-size: 15px;
+      text-align: center;
+      appearance: none;
+      cursor: pointer;
+    }
+    .date-inputs select:focus {
+      outline: none;
+      border-color: #c47010;
+    }
+
+    .btn-fortune {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #d4851a, #b85c10);
+      border: none;
+      border-radius: 50px;
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-fortune:hover { opacity: 0.9; transform: translateY(-2px); }
+
+    /* 結果画面 */
+    #result { display: none; }
+
+    .kaburiko-card {
+      background: white;
+      border-radius: 20px;
+      padding: 32px 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .kaburiko-circle {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: #f0d9a8;
+      margin: 0 auto 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 56px;
+      border: 3px solid #e0c88a;
+      overflow: hidden;
+    }
+    .kaburiko-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .kaburiko-name {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #5d4037;
+      margin-bottom: 8px;
+    }
+    .kaburiko-keyword {
+      font-size: 0.85rem;
+      color: #c47010;
+      background: #fdf5e6;
+      border: 1px solid #e0c88a;
+      border-radius: 20px;
+      padding: 5px 16px;
+      display: inline-block;
+    }
+
+    /* ランク */
+    .rank-card {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .rank-num {
+      font-size: 2.6rem;
+      font-weight: 900;
+      color: #5d4037;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .rank-label { font-size: 0.78rem; color: #aaa; }
+
+    /* 運勢ブロック */
+    .fortune-block {
+      background: white;
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      margin-bottom: 12px;
+    }
+    .f-title {
+      font-size: 0.75rem;
+      color: #c47010;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+    .f-text {
+      font-size: 0.92rem;
+      color: #444;
+      line-height: 1.7;
+    }
+
+    /* なかよし・ライバル */
+    .friend-rival {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .fr-card {
+      background: white;
+      border-radius: 16px;
+      padding: 18px 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+    .fr-card.friend { border-top: 3px solid #81c784; }
+    .fr-card.rival  { border-top: 3px solid #e57373; }
+    .fr-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .fr-card.friend .fr-label { color: #4caf50; }
+    .fr-card.rival  .fr-label { color: #e53935; }
+    .fr-emoji { font-size: 34px; margin-bottom: 8px; width: 80px; height: 80px; margin: 0 auto 8px; }
+    .fr-emoji img { width: 100%; height: 100%; object-fit: contain; }
+    .fr-name {
+      font-size: 0.8rem;
+      color: #5d4037;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+    .fr-advice {
+      font-size: 0.75rem;
+      line-height: 1.6;
+      color: #777;
+    }
+
+    /* 囁き */
+    .whisper {
+      background: #5d4037;
+      border-radius: 16px;
+      padding: 22px 20px;
+      margin-bottom: 14px;
+    }
+    .w-title {
+      font-size: 0.75rem;
+      color: #e0c88a;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+    .w-text {
+      font-size: 0.92rem;
+      color: #fdf5e6;
+      line-height: 1.9;
+      white-space: pre-line;
+    }
+
+    .btn-reset {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: transparent;
+      border: 2px solid #e0c88a;
+      border-radius: 50px;
+      color: #a07850;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: all 0.2s;
+    }
+    .btn-reset:hover { border-color: #c47010; color: #5d4037; }
+
+    .born-note {
+      margin-top: 20px;
+      font-size: 0.75rem;
+      color: #bbb;
+      text-align: center;
+      line-height: 1.7;
+      padding: 0 8px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 入力画面 -->
+  <div id="input">
+    <div class="header">
+      <h1>🔮 かぶりこちゃん占い</h1>
+      <p>生まれた日から、今日のあなたのかぶりこちゃんを占うよ</p>
+    </div>
+
+    <div class="input-card">
+      <span class="input-label">✦ 生年月日を入力してね</span>
+      <div class="date-inputs">
+        <select id="selMonth"><option value="">月</option></select>
+        <select id="selDay"><option value="">日</option></select>
+      </div>
+      <button class="btn-fortune" onclick="showResult()">今日のかぶりこちゃんを見る 🔮</button>
+    </div>
+  </div>
+
+  <!-- 結果画面 -->
+  <div id="result">
+    <div class="header">
+      <h1>🔮 今日のあなたは</h1>
+      <p id="resultDate"></p>
+    </div>
+
+    <div class="kaburiko-card">
+      <div class="kaburiko-circle" id="kaburakoEmoji"></div>
+      <div class="kaburiko-name" id="kaburakoName"></div>
+      <div class="kaburiko-keyword" id="kaburakoKeyword"></div>
+    </div>
+
+    <div class="rank-card">
+      <div class="rank-num" id="rankNum"></div>
+      <div class="rank-label">今日の運勢ランキング（16キャラ中）</div>
+    </div>
+
+    <div class="fortune-block">
+      <div class="f-title">✦ 今日の運勢</div>
+      <div class="f-text" id="fortuneText"></div>
+    </div>
+
+    <div class="fortune-block">
+      <div class="f-title">💕 恋愛運</div>
+      <div class="f-text" id="loveText"></div>
+    </div>
+
+    <div class="fortune-block">
+      <div class="f-title">💼 仕事運</div>
+      <div class="f-text" id="workText"></div>
+    </div>
+
+    <div class="friend-rival">
+      <div class="fr-card friend">
+        <div class="fr-label">💚 今日のなかよし</div>
+        <div class="fr-emoji" id="friendEmoji"></div>
+        <div class="fr-name" id="friendName"></div>
+        <div class="fr-advice" id="friendAdvice"></div>
+      </div>
+      <div class="fr-card rival">
+        <div class="fr-label">🔥 今日のライバル</div>
+        <div class="fr-emoji" id="rivalEmoji"></div>
+        <div class="fr-name" id="rivalName"></div>
+        <div class="fr-advice" id="rivalAdvice"></div>
+      </div>
+    </div>
+
+    <div class="whisper">
+      <div class="w-title">🎀 かぶりこちゃんからのひとこと</div>
+      <div class="w-text" id="whisperText"></div>
+    </div>
+
+    <button class="btn-reset" onclick="resetApp()">← もう一度占う</button>
+
+    <p class="born-note">🌟 あなたのかぶりこちゃんは、生まれた日の星座が決めた、生まれ持ったもの。毎日の運勢は変わるけど、あなたのキャラはずっと変わらないよ。</p>
+  </div>
+
+</div>
+<script>
+const kaburiko = [
+  { id: "ESTP",  name: "あそびかぶりこ",    keyword: "大胆な冒険者",        emoji: "⚡" },
+  { id: "ISFJ",  name: "やさしかぶりこ",    keyword: "縁の下の力持ち",      emoji: "🌷" },
+  { id: "ENTP",  name: "アイデアかぶりこ",  keyword: "止まらない発想家",    emoji: "💡" },
+  { id: "INFJ",  name: "おとめかぶりこ",    keyword: "深い共感の持ち主",    emoji: "🌸" },
+  { id: "ENFJ",  name: "みんなのかぶりこ",  keyword: "人を動かすカリスマ",  emoji: "🌟" },
+  { id: "INTJ",  name: "クールかぶりこ",    keyword: "孤高の戦略家",        emoji: "🖤" },
+  { id: "ENFP",  name: "げんきかぶりこ",    keyword: "自由な情熱家",        emoji: "🌈" },
+  { id: "INFP",  name: "ゆめみかぶりこ",    keyword: "詩的な理想主義者",    emoji: "🌙" },
+  { id: "ENTJ",  name: "リーダーかぶりこ",  keyword: "生まれながらの指揮官",emoji: "👑" },
+  { id: "ISTJ",  name: "まじめかぶりこ",    keyword: "信頼の守護者",        emoji: "📋" },
+  { id: "INTP",  name: "ふしぎかぶりこ",    keyword: "天才肌の研究者",      emoji: "🔭" },
+  { id: "ISFP",  name: "アートかぶりこ",    keyword: "感性豊かな芸術家",    emoji: "🎨" },
+  { id: "ESFP",  name: "はなやかかぶりこ",  keyword: "場を明るくする花形",  emoji: "🎉" },
+  { id: "ISTP",  name: "てきぱきかぶりこ",  keyword: "冷静な職人",          emoji: "🔧" },
+  { id: "ESTJ",  name: "しっかりかぶりこ",  keyword: "秩序を守る管理者",    emoji: "⚙️" },
+  { id: "ESFJ",  name: "なかよしかぶりこ",  keyword: "みんなの太陽",        emoji: "☀️" },
+];
+
+const signToKaburiko = {
+  "牡羊座": "ESTP", "牡牛座": "ISFJ", "双子座": "ENTP",
+  "蟹座":   "INFJ", "獅子座": "ENFJ", "乙女座": "INTJ",
+  "天秤座": "ENFP", "蠍座":   "INFP", "射手座": "ENTJ",
+  "山羊座": "ISTJ", "水瓶座": "INTP", "魚座":   "ISFP",
+};
+
+const friendAdvice = {
+  ESTP:  "今日は積極的に声をかけて。あなたのテンションが相手を動かす。",
+  ISFJ:  "相手の小さな変化に気づいてあげて。それだけで距離が縮まる。",
+  ENTP:  "アイデアを一緒に話してみて。会話が弾む日。",
+  INFJ:  "感じていることを正直に話してみて。深い共感が生まれる日。",
+  ENFJ:  "相手に背中を押してもらえる日。素直に頼ってみて。",
+  INTJ:  "静かに並んでいるだけでいい。言葉より存在が伝わる日。",
+  ENFP:  "一緒に何か新しいことを始めると吉。楽しさが倍になる。",
+  INFP:  "本音を話せる相手。今日は心を開いてみて。",
+  ENTJ:  "相手のペースに合わせてみて。いつもより深い話ができる日。",
+  ISTJ:  "一緒にコツコツ進める日。無言の連帯感が心地いい。",
+  INTP:  "知的な話題で盛り上がれる日。お互いの発見を共有して。",
+  ISFP:  "感性が合う日。一緒にいるだけで穏やかになれる。",
+  ESFP:  "一緒にいると楽しさが加速する日。誘ってみて。",
+  ISTP:  "言葉は少なくていい。行動で示し合える相手。",
+  ESTJ:  "今日は頼りにしてみて。しっかり応えてくれる日。",
+  ESFJ:  "相手の笑顔があなたのエネルギーになる日。",
+};
+
+const rivalAdvice = {
+  ESTP:  "真正面からぶつからず、スピード勝負は避けて。今日は一歩引いて。",
+  ISFJ:  "相手の優しさに甘えすぎないように。距離感を保つのが吉。",
+  ENTP:  "議論になりそうなら、今日は聞き役に回って。",
+  INFJ:  "相手の感情に引っ張られないよう注意。自分の軸を保って。",
+  ENFJ:  "お互いの主張がぶつかる日。今日は譲る場面も大切。",
+  INTJ:  "意見の違いを感じても、今日は深追いしないで。",
+  ENFP:  "テンションのギャップを感じるかも。無理に合わせなくていい。",
+  INFP:  "感情的になりそうなら、少し時間を置いて。",
+  ENTJ:  "主導権争いになりそうな日。今日は相手を立てる場面を作って。",
+  ISTJ:  "お互いのペースが合わない日。焦らず自分のリズムで動いて。",
+  INTP:  "理屈でぶつかると長引く日。今日は感覚で話して。",
+  ISFP:  "価値観の違いを感じるかも。今日は干渉しすぎないで。",
+  ESFP:  "ノリの違いを感じる日。無理に合わせず自分のペースで。",
+  ISTP:  "言葉が届きにくい日。行動で示す方が伝わる。",
+  ESTJ:  "やり方の違いでぶつかりやすい日。今日は柔軟に。",
+  ESFJ:  "気を遣いすぎてお互い疲れる日かも。今日は正直に。",
+};
+
+const compatibility = {
+  ESTP:  { friend: "ISFJ", rival: "INTJ" },
+  ISFJ:  { friend: "ESTP", rival: "ENFP" },
+  ENTP:  { friend: "INFJ", rival: "ISTJ" },
+  INFJ:  { friend: "ENTP", rival: "ESFP" },
+  ENFJ:  { friend: "INFP", rival: "ISTP" },
+  INTJ:  { friend: "ENFP", rival: "ESTP" },
+  ENFP:  { friend: "INTJ", rival: "ISFJ" },
+  INFP:  { friend: "ENFJ", rival: "ESTJ" },
+  ENTJ:  { friend: "INTP", rival: "ISFP" },
+  ISTJ:  { friend: "ESFJ", rival: "ENTP" },
+  INTP:  { friend: "ENTJ", rival: "ESFJ" },
+  ISFP:  { friend: "ESFP", rival: "ENTJ" },
+  ESFP:  { friend: "ISFP", rival: "INFJ" },
+  ISTP:  { friend: "ESTJ", rival: "ENFJ" },
+  ESTJ:  { friend: "ISTP", rival: "INFP" },
+  ESFJ:  { friend: "ISTJ", rival: "INTP" },
+};
+
+const fortuneMsg = {
+  ESTP:  ["行動力が最大値の日。迷ったら飛び込んで。", "リスクを楽しめる日。大胆さが吉と出る。"],
+  ISFJ:  ["誰かへのさりげない優しさが、大きな縁を作る。", "自分を後回しにしすぎない日。今日は自分を労って。"],
+  ENTP:  ["発想が止まらない一日。アイデアを誰かに話すと形になる。", "議論よりも実行の日。頭の中を外に出してみて。"],
+  INFJ:  ["誰かの本音が見える日。その感覚を大切にして。", "自分の内側と対話する時間が必要。静かな場所へ。"],
+  ENFJ:  ["人の笑顔があなたのエネルギーになる日。", "誰かのために動くことで、自分も満たされる。"],
+  INTJ:  ["計画通りに物事が進む一日。あなたの洞察力が冴えている。", "一人の時間が充電になる。距離を置くことで見えてくるものがある。"],
+  ENFP:  ["好奇心のままに動いていい日。直感が正解。", "新しい出会いが運を開く。フットワーク軽く。"],
+  INFP:  ["感情が豊かに動く一日。その感受性はギフト。", "理想と現実のギャップに気づく日。でも夢は捨てなくていい。"],
+  ENTJ:  ["リーダーシップが光る。周囲を巻き込む力が最大に。", "決断のスピードが運を引き寄せる。迷ったら動く。"],
+  ISTJ:  ["積み上げてきたものが実を結ぶ日。コツコツが最強。", "ルーティンを守ることで安定が生まれる。"],
+  INTP:  ["新しい理論に気づく日。メモを手放さないで。", "答えが出ないことを楽しめる時期。探求そのものが宝。"],
+  ISFP:  ["美しいものに触れると運気が上がる日。感性を磨いて。", "言葉より行動で気持ちを伝えてみて。"],
+  ESFP:  ["あなたがいると場が華やぐ。その明るさが今日の運を開く。", "楽しむことが一番の開運行動。全力で今を生きて。"],
+  ISTP:  ["手を動かすことで答えが出る日。考えるより試して。", "冷静な判断が光る。感情より事実を見る力が活きる。"],
+  ESTJ:  ["効率よく動ける日。リストを作って一気に片付けよう。", "責任感が評価される。真面目さが武器になる日。"],
+  ESFJ:  ["周囲の雰囲気を明るくできる日。あなたの存在が場を救う。", "人の気持ちに敏感になりすぎず、自分の感覚も大事に。"],
+};
+
+const loveMsg = {
+  ESTP: "スリルのある展開が恋愛を加速させる日。",
+  ISFJ: "相手への小さな気遣いが大きな愛情になる。",
+  ENTP: "ユーモアで相手の心をつかめる日。",
+  INFJ: "相手の本音が見えている。その共感力を恋愛に活かして。",
+  ENFJ: "相手を引き上げる言葉が自然と出てくる日。",
+  INTJ: "感情より行動で示す日。相手のニーズを先読みできる。",
+  ENFP: "運命的な出会いの予感。フィーリング重視で動いて。",
+  INFP: "理想の恋愛像を大切に。現実の相手をちゃんと見ることも忘れずに。",
+  ENTJ: "リードすることで関係が動く。ただし相手のペースも尊重して。",
+  ISTJ: "誠実さが伝わる日。地道な行動が信頼につながる。",
+  INTP: "知的な会話が恋愛を深める。感じることも大切に。",
+  ISFP: "素直な気持ちをそのまま伝えると伝わる日。",
+  ESFP: "あなたの明るさが相手を惹きつける。笑顔でいることが最強。",
+  ISTP: "言葉より一緒にいる時間が愛情表現になる日。",
+  ESTJ: "はっきり気持ちを伝えると関係が動く日。",
+  ESFJ: "自分の気持ちも大切にしながら、周囲との調和を保って。",
+};
+
+const workMsg = {
+  ESTP: "スピード感のある行動が結果を出す日。",
+  ISFJ: "縁の下の力持ちとしての働きが評価される。",
+  ENTP: "アイデアを出し続けて。そのうちの一つが大きく化ける。",
+  INFJ: "チームの空気を読んで動くと評価される日。",
+  ENFJ: "人をサポートすることで自分も成長できる日。",
+  INTJ: "長期的な視点で動く日。全体像を見ることが正解。",
+  ENFP: "新しいプロジェクトに飛び込む日。熱量が周囲を動かす。",
+  INFP: "創造的な仕事に集中できる日。好きなことに全力を。",
+  ENTJ: "決断を迫られる場面で力を発揮。リーダーとして動く日。",
+  ISTJ: "コツコツ積み上げた成果が認められる日。",
+  INTP: "新しいアプローチを試す絶好の日。独自の発想が評価される。",
+  ISFP: "自分らしいやり方で進める日。個性が強みになる。",
+  ESFP: "場の雰囲気を盛り上げることでチームが動く日。",
+  ISTP: "問題解決力が光る日。手を動かすことで道が開ける。",
+  ESTJ: "効率重視で動く日。無駄を省くことで成果が出る。",
+  ESFJ: "チームワークが最大に発揮される日。",
+};
+
+// ランク別・キャラ別の囁きメッセージ（整合性あり）
+const whisperMsg = {
+  rank1: {
+    ESTP: "今日は何をやっても吉。その直感と行動力、全開でいこう。",
+    ISFJ: "今日のあなたの優しさは、誰かの一日を救う。",
+    ENTP: "アイデアが金になる日。思いついたら即動いて。",
+    INFJ: "あなたの直感が今日は100%正しい。信じて進んで。",
+    ENFJ: "あなたがいるだけで、場が輝く日。",
+    INTJ: "今日の洞察力は本物。その計画、実行していい。",
+    ENFP: "可能性が全開の日。好奇心のままに動いて。",
+    INFP: "今日の感性はギフト。感じたことを形にして。",
+    ENTJ: "今日のあなたには、人を動かす力がある。",
+    ISTJ: "積み上げてきたものが、今日花開く。",
+    INTP: "今日の発見は本物。メモを手放さないで。",
+    ISFP: "今日の感性が、最高の作品を生む。",
+    ESFP: "あなたがいると世界が明るくなる日。全力で楽しんで。",
+    ISTP: "今日の判断は冴えている。自信を持って動いて。",
+    ESTJ: "今日の決断は正しい。迷わず進んで。",
+    ESFJ: "あなたの笑顔が、今日一番の開運行動。",
+  },
+  rank2_3: {
+    ESTP: "好調な流れの中にいる。大胆に動くと吉。",
+    ISFJ: "今日の優しさは、じわじわ広がっていく。",
+    ENTP: "発想が冴えている。誰かに話すと形になる。",
+    INFJ: "感じていることを、信じていい日。",
+    ENFJ: "人のために動くことが、自分も満たす日。",
+    INTJ: "計画が進む日。一歩踏み出してみて。",
+    ENFP: "フットワーク軽く動くと、いいことが起きる。",
+    INFP: "理想に近づいている実感がある日。",
+    ENTJ: "リードすると、周囲がついてくる日。",
+    ISTJ: "コツコツが報われる流れの中にいる。",
+    INTP: "探求が深まる日。好奇心を大切に。",
+    ISFP: "感性が豊かに動く日。その感覚を信じて。",
+    ESFP: "場を明るくできる日。その明るさが運を呼ぶ。",
+    ISTP: "手を動かすと答えが出る日。",
+    ESTJ: "効率よく動ける日。リストを作って進もう。",
+    ESFJ: "周囲との繋がりが運を開く日。",
+  },
+  rank4_6: {
+    ESTP: "じっくり構える日。次の大きな行動への準備期間。",
+    ISFJ: "自分を労う日。いつも誰かのために動いているあなたへ。",
+    ENTP: "アイデアを温める日。焦らず、じっくり育てて。",
+    INFJ: "内側を整える日。静かな時間が次の直感を生む。",
+    ENFJ: "今日は受け取る番。誰かの好意を素直に受け入れて。",
+    INTJ: "計画を見直す日。完璧じゃなくてもいい。",
+    ENFP: "エネルギーを充電する日。好きなことに時間を使って。",
+    INFP: "感情を整理する日。日記に書き出してみて。",
+    ENTJ: "戦略を練る日。動く前に全体像を確認して。",
+    ISTJ: "ルーティンを守ることで安定が生まれる日。",
+    INTP: "答えが出なくていい日。問い続けることが大切。",
+    ISFP: "美しいものに触れる日。感性を磨いて。",
+    ESFP: "楽しむことが充電になる日。",
+    ISTP: "冷静に観察する日。焦らず事実を見て。",
+    ESTJ: "丁寧に進める日。効率より誠実さを大切に。",
+    ESFJ: "自分の気持ちを優先していい日。",
+  },
+  rank7_11: {
+    ESTP: "今日は準備の日。次に動く時のためにエネルギーを蓄えて。",
+    ISFJ: "小さな親切が、後で大きな縁になる。",
+    ENTP: "今日出たアイデアは、後で光る。メモしておいて。",
+    INFJ: "感じすぎている日かも。少し距離を置いていい。",
+    ENFJ: "人のために動きすぎていない？今日は自分を大切に。",
+    INTJ: "一人の時間が充電になる日。",
+    ENFP: "立ち止まって考える日。それも大事な行動。",
+    INFP: "理想と現実のギャップを感じても、夢は捨てなくていい。",
+    ENTJ: "今日は聞く日。話すより相手の言葉に耳を傾けて。",
+    ISTJ: "変化に戸惑う日かも。でも変化は新しいルーティンになるだけ。",
+    INTP: "知識より感覚を大事にする日。",
+    ISFP: "言葉にできない感情があっても、それでいい。",
+    ESFP: "今日は内側を見つめる日。静かな時間も大切。",
+    ISTP: "感情と向き合う日。何かを作ると楽になる。",
+    ESTJ: "効率だけでは測れないものに気づく日。",
+    ESFJ: "みんなを笑顔にする前に、自分が笑顔でいること。",
+  },
+  rank16: {
+    ESTP: "低い日があるから、高い日が輝く。今日は充電日。",
+    ISFJ: "今日は誰かに頼っていい日。自分を後回しにしなくていい。",
+    ENTP: "アイデアが煮詰まる日。散歩して頭をリセットして。",
+    INFJ: "感じすぎて疲れている日かも。今日は休むことが運のうち。",
+    ENFJ: "与えすぎた分を取り戻す日。自分を満たして。",
+    INTJ: "計画通りにいかない日。でもそれが新しい発見になる。",
+    ENFP: "エネルギーが低い日。無理せず、好きなことだけやって。",
+    INFP: "感情が重い日かも。今日は何も決めなくていい。",
+    ENTJ: "立ち止まる勇気が必要な日。休息も戦略のうち。",
+    ISTJ: "思い通りにいかない日。でもコツコツは続けていい。",
+    INTP: "答えが出ない日。それでいい。問い続けることに意味がある。",
+    ISFP: "感性が重い日。今日は何も作らなくていい。",
+    ESFP: "テンションが上がらない日。それも正直な自分。",
+    ISTP: "うまくいかない日。原因を分析するより、今日は休んで。",
+    ESTJ: "思い通りにならない日。完璧じゃなくていい。",
+    ESFJ: "気を遣いすぎて疲れている日かも。今日は自分優先で。",
+  },
+};
+
+function getSign(month, day) {
+  if ((month===3&&day>=21)||(month===4&&day<=19)) return "牡羊座";
+  if ((month===4&&day>=20)||(month===5&&day<=20)) return "牡牛座";
+  if ((month===5&&day>=21)||(month===6&&day<=21)) return "双子座";
+  if ((month===6&&day>=22)||(month===7&&day<=22)) return "蟹座";
+  if ((month===7&&day>=23)||(month===8&&day<=22)) return "獅子座";
+  if ((month===8&&day>=23)||(month===9&&day<=22)) return "乙女座";
+  if ((month===9&&day>=23)||(month===10&&day<=23)) return "天秤座";
+  if ((month===10&&day>=24)||(month===11&&day<=22)) return "蠍座";
+  if ((month===11&&day>=23)||(month===12&&day<=21)) return "射手座";
+  if ((month===12&&day>=22)||(month===1&&day<=19)) return "山羊座";
+  if ((month===1&&day>=20)||(month===2&&day<=18)) return "水瓶座";
+  return "魚座";
+}
+
+function getKaburiko(id) { return kaburiko.find(k => k.id === id); }
+
+function getDailySeed(id) {
+  const d = new Date();
+  const str = `${d.getFullYear()}${d.getMonth()}${d.getDate()}${id}`;
+  let h = 0;
+  for (let i = 0; i < str.length; i++) { h = (h<<5)-h+str.charCodeAt(i); h|=0; }
+  return Math.abs(h);
+}
+
+function getDailyRank(id) {
+  const sorted = [...kaburiko].sort((a,b) => getDailySeed(a.id+'rank')-getDailySeed(b.id+'rank'));
+  return sorted.findIndex(k=>k.id===id)+1;
+}
+
+// セレクト生成
+const selMonth = document.getElementById('selMonth');
+const selDay   = document.getElementById('selDay');
+for (let m=1;m<=12;m++){const o=document.createElement('option');o.value=m;o.textContent=m+'月';selMonth.appendChild(o);}
+for (let d=1;d<=31;d++){const o=document.createElement('option');o.value=d;o.textContent=d+'日';selDay.appendChild(o);}
+
+function showResult() {
+  const month = parseInt(selMonth.value);
+  const day   = parseInt(selDay.value);
+  if (!month||!day){alert('生年月日を選んでね！');return;}
+
+  const sign   = getSign(month, day);
+  const typeId = signToKaburiko[sign];
+  const me     = getKaburiko(typeId);
+  const seed   = getDailySeed(typeId);
+  const rank   = getDailyRank(typeId);
+  const comp   = compatibility[typeId];
+  const friend = getKaburiko(comp.friend);
+  const rival  = getKaburiko(comp.rival);
+
+  const d = new Date();
+  document.getElementById('resultDate').textContent =
+    `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+
+  document.getElementById('kaburakoEmoji').innerHTML = `<img src="kaburiko/${me.id}.png" alt="${me.name}">`;
+  document.getElementById('kaburakoName').textContent    = me.name;
+  document.getElementById('kaburakoKeyword').textContent = me.keyword;
+
+  const rankEmoji = rank===1?'🥇':rank<=3?'🥈':rank<=6?'✨':rank<=11?'🔮':'🌙';
+  document.getElementById('rankNum').textContent = `${rankEmoji} ${rank}位`;
+
+  const fm = fortuneMsg[typeId];
+  document.getElementById('fortuneText').textContent = fm[seed%fm.length];
+  document.getElementById('loveText').textContent    = loveMsg[typeId];
+  document.getElementById('workText').textContent    = workMsg[typeId];
+
+  document.getElementById('friendEmoji').innerHTML  = `<img src="kaburiko/${friend.id}.png" alt="${friend.name}">`;
+  document.getElementById('friendName').textContent   = friend.name;
+  document.getElementById('friendAdvice').textContent = friendAdvice[comp.friend];
+  document.getElementById('rivalEmoji').innerHTML   = `<img src="kaburiko/${rival.id}.png" alt="${rival.name}">`;
+  document.getElementById('rivalName').textContent    = rival.name;
+  document.getElementById('rivalAdvice').textContent  = rivalAdvice[comp.rival];
+
+  // ランクと整合性のある囁き
+  const wBank = rank===1 ? whisperMsg.rank1 :
+                rank<=3  ? whisperMsg.rank2_3 :
+                rank<=6  ? whisperMsg.rank4_6 :
+                rank<=11 ? whisperMsg.rank7_11 :
+                           whisperMsg.rank16;
+  document.getElementById('whisperText').textContent = wBank[typeId];
+
+  document.getElementById('input').style.display  = 'none';
+  document.getElementById('result').style.display = 'block';
+  window.scrollTo(0,0);
+}
+
+function resetApp() {
+  document.getElementById('input').style.display  = 'block';
+  document.getElementById('result').style.display = 'none';
+  selMonth.value=''; selDay.value='';
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
