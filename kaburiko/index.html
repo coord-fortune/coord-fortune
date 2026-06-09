@@ -211,8 +211,8 @@
       box-shadow: 0 6px 24px rgba(231,111,81,0.35);
     }
     .result-hero .label {
-      font-size: 0.8rem;
-      font-weight: 700;
+      font-size: 1rem;
+      font-weight: 900;
       opacity: 0.85;
       letter-spacing: 2px;
       margin-bottom: 8px;
@@ -383,6 +383,22 @@
       margin-top: 8px;
     }
     .retry-btn:hover { background: #fff0ee; }
+    .share-btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: #e8640c;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+      margin-top: 12px;
+    }
+    .share-btn:hover { background: #cf5608; }
 
     /* スタート画面 */
     #start-screen { text-align: center; }
@@ -460,7 +476,7 @@
   <div class="header">
     <div class="chara">
       <div class="chara-circle">
-        <img src="kaburiko_16p_icon.png" alt="かぶりこちゃん" onerror="this.style.display='none'">
+        <img src="kaburiko/ESFJ.png" alt="かぶりこちゃん" onerror="this.style.display='none'">
       </div>
       <span class="deco deco-tl">✦</span>
       <span class="deco deco-tr">♡</span>
@@ -509,6 +525,7 @@
 
     <div class="result-hero fade-in">
       <div class="label">✨ あなたのかぶりこタイプ ✨</div>
+      <div id="res-chara-img" style="margin: 12px auto 8px; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center;"></div>
       <div class="result-name" id="res-name" style="font-size:1.8rem;"></div>
       <div id="res-degree" style="font-size:1.2rem; font-weight:900; margin: 8px 0; opacity:0.95;"></div>
       <div id="res-type" style="font-size:0.85rem; opacity:0.75; margin-bottom:10px; font-weight:700; letter-spacing:2px;"></div>
@@ -522,7 +539,7 @@
 
     <div class="result-card" style="background: #fff8f5; border: 2px solid #f9c5b8;">
       <h3>🧥 かぶりこちゃんからひとこと</h3>
-      <p id="res-advice" style="font-style: italic; color: #c87965;"></p>
+      <p id="res-advice" style="color: #c87965;"></p>
     </div>
 
     <div class="two-col">
@@ -552,6 +569,7 @@
       <div class="img-note">↑ 自分のタイプを探してみてね！</div>
     </div>
 
+    <button class="share-btn" onclick="shareResult()">結果をシェアする 📤</button>
     <button class="retry-btn" onclick="resetQuiz()">もう一回やってみる 🔄</button>
   </div>
 
@@ -1027,7 +1045,19 @@ function showResult() {
     </div>
   `).join('');
 
-  // 画像
+  // 個別キャラ画像（ヒーロー内）
+  const charaImgArea = document.getElementById('res-chara-img');
+  const charaImg = new Image();
+  charaImg.src = `kaburiko/${typeCode}.png`;
+  charaImg.alt = type.name;
+  charaImg.style.width = '200px';
+  charaImg.style.height = '200px';
+  charaImg.style.objectFit = 'contain';
+  charaImg.style.filter = 'drop-shadow(0 4px 16px rgba(0,0,0,0.18))';
+  charaImgArea.innerHTML = '';
+  charaImgArea.appendChild(charaImg);
+
+  // 一覧画像（下部カード）
   const imageArea = document.getElementById('image-area');
   const img = new Image();
   img.src = 'kaburiko_16p.png';
@@ -1047,6 +1077,19 @@ function showResult() {
   void rs.offsetWidth;
   rs.classList.add('fade-in');
   window.scrollTo(0, 0);
+}
+
+function shareResult() {
+  const name = document.getElementById('res-name').textContent;
+  const typeCode = document.getElementById('res-type').textContent.replace(/[（）]/g, '');
+  const text = `私は「${name}」タイプでした！\nあなたも診断してみてね👇\n#かぶりこ度診断\n${location.href}`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('コピーしました！LINEやSNSに貼り付けてシェアしてね🎀');
+    });
+  } else {
+    prompt('このテキストをコピーしてシェアしてね！', text);
+  }
 }
 
 function resetQuiz() {
