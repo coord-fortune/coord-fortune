@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日の星座占い</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    .bg-symbol {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 60vw;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 0;
+      transition: opacity 1.5s ease;
+      user-select: none;
+      line-height: 1;
+    }
+
+    #stars-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+    }
+
+    body {
+      font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: #f0e6ff;
+      transition: background 1.2s ease;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 20px 24px 60px;
+    }
+
+    .header {
+      text-align: center;
+      padding: 40px 0 30px;
+    }
+
+    .header h1 {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #f0e6ff;
+      line-height: 1.5;
+    }
+
+    .header .subtitle {
+      font-size: 0.92rem;
+      color: #b39ddb;
+      margin-top: 8px;
+    }
+
+    .stars {
+      font-size: 1.4rem;
+      margin-bottom: 8px;
+    }
+
+    /* 入力フォーム */
+    .form-card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 28px 24px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .form-label {
+      font-size: 0.92rem;
+      color: #b39ddb;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      color: #f0e6ff;
+      font-size: 1rem;
+      margin-bottom: 20px;
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: #b39ddb;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, #7c4dff, #b39ddb);
+      color: white;
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+
+    /* 結果 */
+    .result {
+      display: none;
+      margin-top: 24px;
+    }
+
+    .result-card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 28px 24px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.15);
+      text-align: center;
+    }
+
+    .sign-emoji {
+      font-size: 4rem;
+      margin-bottom: 8px;
+    }
+
+    .sign-name {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #f0e6ff;
+      margin-bottom: 4px;
+    }
+
+    .sign-date {
+      font-size: 0.88rem;
+      color: #b39ddb;
+      margin-bottom: 20px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      margin: 20px 0;
+    }
+
+    .today-label {
+      font-size: 0.88rem;
+      color: #b39ddb;
+      margin-bottom: 12px;
+    }
+
+    .fortune-category {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+    }
+
+    .category-name {
+      font-size: 0.92rem;
+      color: #b39ddb;
+    }
+
+    .stars-rating {
+      color: #ffd700;
+      font-size: 1rem;
+      letter-spacing: 2px;
+    }
+
+    .fortune-message {
+      font-size: 0.95rem;
+      line-height: 1.8;
+      color: #e8d5ff;
+      text-align: left;
+      margin-top: 16px;
+      padding: 16px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+    }
+
+    .lucky {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .lucky-item {
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .lucky-item.two-line {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .lucky-label {
+      font-size: 0.9rem;
+      color: #b39ddb;
+    }
+
+    .lucky-value {
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #ffd700;
+    }
+
+    .lucky-item.two-line .lucky-value {
+      margin-top: 6px;
+    }
+
+    .lucky-color-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .color-circle {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .color-message {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #c5b8e8;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars-canvas"></canvas>
+  <div class="bg-symbol" id="bg-symbol"></div>
+  <div class="container">
+    <div class="header">
+      <div class="stars">✨🌙✨</div>
+      <h1>今日の<br><strong>星座占い</strong></h1>
+      <p class="subtitle">生年月日から今日の運勢をチェック</p>
+    </div>
+
+    <div class="form-card">
+      <label class="form-label">🎂 生年月日を入力</label>
+      <input type="date" class="form-input" id="birthdate" />
+      <button class="btn" onclick="fortune()">🔮 今日の運勢を見る</button>
+    </div>
+
+    <div class="result" id="result">
+      <div class="result-card">
+        <div class="sign-emoji" id="res-emoji"></div>
+        <div class="sign-name" id="res-name"></div>
+        <div class="sign-date" id="res-date"></div>
+        <hr class="divider">
+        <div class="today-label">📅 今日の運勢</div>
+        <div class="fortune-category">
+          <span class="category-name">💫 総合運</span>
+          <span class="stars-rating" id="res-overall"></span>
+        </div>
+        <div class="fortune-category">
+          <span class="category-name">💕 恋愛運</span>
+          <span class="stars-rating" id="res-love"></span>
+        </div>
+        <div class="fortune-category">
+          <span class="category-name">💰 金運</span>
+          <span class="stars-rating" id="res-money"></span>
+        </div>
+        <div class="fortune-category">
+          <span class="category-name">💪 健康運</span>
+          <span class="stars-rating" id="res-health"></span>
+        </div>
+        <div class="fortune-message" id="res-message">
+          <div style="font-size:0.75rem; color:#b39ddb; margin-bottom:8px;">✨ 星からのささやき</div>
+          <div id="res-message-text"></div>
+        </div>
+        <div class="lucky">
+          <div class="lucky-item two-line">
+            <div class="lucky-label">🎨 ラッキーカラー</div>
+            <div class="lucky-color-badge">
+              <span class="color-circle" id="res-color-circle"></span>
+              <span class="lucky-value" id="res-color"></span>
+            </div>
+            <div class="color-message" id="res-color-message"></div>
+          </div>
+          <div class="lucky-item">
+            <span class="lucky-label">🔢 ラッキーナンバー</span>
+            <span class="lucky-value" id="res-number"></span>
+          </div>
+          <div class="lucky-item two-line">
+            <div class="lucky-label">🎁 ラッキーアイテム</div>
+            <div class="lucky-value" id="res-item"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 星アニメーション
+    const canvas = document.getElementById('stars-canvas');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+
+    function initStars() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      stars = Array.from({ length: 120 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.5 + 0.3,
+        alpha: Math.random(),
+        speed: Math.random() * 0.008 + 0.003,
+        twinkle: Math.random() * Math.PI * 2,
+      }));
+    }
+
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      stars.forEach(s => {
+        s.twinkle += s.speed;
+        s.alpha = 0.3 + Math.sin(s.twinkle) * 0.4;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+        ctx.fill();
+      });
+      requestAnimationFrame(drawStars);
+    }
+
+    initStars();
+    drawStars();
+    window.addEventListener('resize', initStars);
+
+    const signBg = {
+      '山羊座': 'linear-gradient(135deg, #05050f 0%, #0a0a1a 50%, #050810 100%)',
+      '水瓶座': 'linear-gradient(135deg, #050810 0%, #080f1e 50%, #050810 100%)',
+      '魚座':   'linear-gradient(135deg, #05050f 0%, #08081a 50%, #050810 100%)',
+      '牡羊座': 'linear-gradient(135deg, #0f0505 0%, #180808 50%, #0f0505 100%)',
+      '牡牛座': 'linear-gradient(135deg, #050f05 0%, #080f08 50%, #050f05 100%)',
+      '双子座': 'linear-gradient(135deg, #0f0f05 0%, #141408 50%, #0f0f05 100%)',
+      '蟹座':   'linear-gradient(135deg, #05050f 0%, #0a0a14 50%, #05050f 100%)',
+      '獅子座': 'linear-gradient(135deg, #100800 0%, #180e00 50%, #100800 100%)',
+      '乙女座': 'linear-gradient(135deg, #050f05 0%, #080f08 50%, #050f05 100%)',
+      '天秤座': 'linear-gradient(135deg, #08050f 0%, #0e0818 50%, #08050f 100%)',
+      '蠍座':   'linear-gradient(135deg, #0f0508 0%, #180508 50%, #0f0505 100%)',
+      '射手座': 'linear-gradient(135deg, #07050f 0%, #0d0818 50%, #07050f 100%)',
+    };
+
+    const signs = [
+      { name: '山羊座', emoji: '♑', from: [12,22], to: [1,19], keyword: '忍耐・野心・現実主義' },
+      { name: '水瓶座', emoji: '♒', from: [1,20], to: [2,18], keyword: '独創・自由・革新' },
+      { name: '魚座',   emoji: '♓', from: [2,19], to: [3,20], keyword: '夢想・共感・直感' },
+      { name: '牡羊座', emoji: '♈', from: [3,21], to: [4,19], keyword: '情熱・行動力・勇気' },
+      { name: '牡牛座', emoji: '♉', from: [4,20], to: [5,20], keyword: '安定・忠実・審美眼' },
+      { name: '双子座', emoji: '♊', from: [5,21], to: [6,20], keyword: '好奇心・柔軟・知性' },
+      { name: '蟹座',   emoji: '♋', from: [6,21], to: [7,22], keyword: '母性・感受性・家庭' },
+      { name: '獅子座', emoji: '♌', from: [7,23], to: [8,22], keyword: '自信・創造性・華やかさ' },
+      { name: '乙女座', emoji: '♍', from: [8,23], to: [9,22], keyword: '几帳面・分析・誠実' },
+      { name: '天秤座', emoji: '♎', from: [9,23], to: [10,22], keyword: 'バランス・調和・社交' },
+      { name: '蠍座',   emoji: '♏', from: [10,23], to: [11,21], keyword: '情熱・神秘・洞察力' },
+      { name: '射手座', emoji: '♐', from: [11,22], to: [12,21], keyword: '自由・冒険・楽観' },
+    ];
+
+    const fortunes = {
+      '山羊座': {
+        messages: [
+          '地道な努力が実を結ぶ予感。焦らず一歩一歩進むことで、大きな成果を手にできそうです。',
+          '責任感の強いあなたに、周囲からの信頼が集まる日。頼まれごとは快く引き受けて。',
+          '現実的な判断力が光る日。長期的な目標を見据えた行動が吉。計画を立て直すチャンス。',
+        ],
+        colors: ['ブラック', 'ネイビー', 'ダークグリーン', 'ブラウン'],
+        items: ['手帳', '革靴', '時計', 'コーヒー'],
+      },
+      '水瓶座': {
+        messages: [
+          'ユニークなアイデアが次々と浮かぶ日。常識にとらわれず、自由な発想を大切にして。',
+          '人とは違う視点がチャンスを生む日。個性を活かした行動が周囲を驚かせそう。',
+          '新しいテクノロジーや情報にアンテナを張って。ひらめきが未来を切り拓くヒントに。',
+        ],
+        colors: ['エレクトリックブルー', 'シルバー', 'ターコイズ', 'ホワイト'],
+        items: ['スマホ', 'イヤホン', '本', 'ソーダ水'],
+      },
+      '魚座': {
+        messages: [
+          '感受性が高まる一日。アートや音楽など、感性を刺激するものに触れると運気アップ。',
+          '直感を信じて行動すると吉。夢で見たことや、ふと浮かんだアイデアを大切にして。',
+          '誰かへの優しさが巡り巡ってあなたに返ってくる日。思いやりのある行動を心がけて。',
+        ],
+        colors: ['シーブルー', 'ラベンダー', 'パールホワイト', 'シルバー'],
+        items: ['アロマ', '貝殻', 'ハーブティー', '日記'],
+      },
+      '牡羊座': {
+        messages: [
+          'エネルギーに満ちた一日！積極的に行動することで、チャンスをつかめそうです。',
+          '新しいことへの挑戦が吉。迷っていたことがあれば、今日思い切って一歩踏み出して。',
+          'リーダーシップを発揮できる日。周りを引っ張っていく存在として輝けそう。',
+        ],
+        colors: ['レッド', 'オレンジ', 'イエロー', 'ホットピンク'],
+        items: ['スニーカー', 'スポーツドリンク', '赤いアイテム', 'キャップ'],
+      },
+      '牡牛座': {
+        messages: [
+          'ゆったりとした時間の中に幸せが宿る日。五感を大切にして、心地よいものを取り入れて。',
+          '安定を大切にするあなたの信頼感が光る日。コツコツと積み上げてきたことが報われそう。',
+          '美しいものに囲まれることで運気上昇。お気に入りのカフェや場所に足を運んでみて。',
+        ],
+        colors: ['グリーン', 'ピンク', 'ベージュ', 'ブラウン'],
+        items: ['お花', 'スイーツ', 'キャンドル', 'クッション'],
+      },
+      '双子座': {
+        messages: [
+          'コミュニケーション能力が冴え渡る一日。積極的に人と話すことで新しい出会いが生まれそう。',
+          '好奇心のおもむくまま動いてみて。いつもと違うルートや場所が幸運を引き寄せます。',
+          '情報収集に最適な日。気になることをどんどん調べて、知識を広げていきましょう。',
+        ],
+        colors: ['イエロー', 'ライトブルー', 'オレンジ', 'ホワイト'],
+        items: ['本', 'ノート', 'スマホ', 'カフェラテ'],
+      },
+      '蟹座': {
+        messages: [
+          '家族や大切な人との時間が運気を高める日。温かいつながりの中に幸せを見つけて。',
+          '感情が豊かになる一日。自分の気持ちに正直に行動することで、心が軽くなりそう。',
+          '懐かしい場所や人に想いを馳せると吉。思い出の品が幸運のヒントをくれるかも。',
+        ],
+        colors: ['シルバー', 'ホワイト', 'パールピンク', 'クリーム'],
+        items: ['月モチーフ', 'アルバム', 'ハンドクリーム', '白いもの'],
+      },
+      '獅子座': {
+        messages: [
+          '存在感が際立つ輝きの一日！自信を持って表舞台に立つことで、周囲を魅了できそう。',
+          'クリエイティブなエネルギーが全開。好きなことに全力で取り組むと、大きな喜びが待っています。',
+          '主役は今日のあなた！積極的に自己表現することで、素敵な出来事が起こりそう。',
+        ],
+        colors: ['ゴールド', 'オレンジ', 'サンイエロー', 'レッド'],
+        items: ['アクセサリー', 'サングラス', 'ゴールドアイテム', 'ジュース'],
+      },
+      '乙女座': {
+        messages: [
+          '細やかな気配りが周囲に喜ばれる日。丁寧な仕事ぶりが高く評価されそうです。',
+          '整理整頓や掃除をすると運気アップ。環境を整えることで、頭の中もスッキリします。',
+          '分析力と観察眼が冴える日。気になっていた問題を論理的に解決できるチャンス。',
+        ],
+        colors: ['ネイビー', 'グレー', 'モスグリーン', 'ベージュ'],
+        items: ['手帳', '観葉植物', 'ハーブ', '整理グッズ'],
+      },
+      '天秤座': {
+        messages: [
+          'バランス感覚が光る一日。人間関係の橋渡し役として活躍できそう。穏やかに調整して。',
+          '美的センスが高まる日。ファッションやインテリアへのこだわりが運気を引き上げます。',
+          '迷っていることがあれば、信頼できる人に相談してみて。第三者の意見が決断の助けに。',
+        ],
+        colors: ['ピンク', 'ライトブルー', 'ラベンダー', 'ホワイト'],
+        items: ['ミラー', 'バラ', 'ハーフアップ', 'マカロン'],
+      },
+      '蠍座': {
+        messages: [
+          '洞察力が鋭くなる一日。表面だけでなく本質を見抜く力が冴え渡ります。直感を信じて。',
+          '情熱的な気持ちを大切に。本気で向き合うことで、深い絆や成果を手にできそうです。',
+          '隠れていたチャンスが浮かび上がる日。見落としていたものを再確認してみて。',
+        ],
+        colors: ['ディープレッド', 'ブラック', 'パープル', 'ダークブラウン'],
+        items: ['クリスタル', '黒いアイテム', 'ガーネット', 'ダークチョコ'],
+      },
+      '射手座': {
+        messages: [
+          '冒険心に従って動くと吉！いつもと違うことに挑戦することで、運気が大きく開きます。',
+          '前向きな気持ちが周囲に伝わる日。楽観的なあなたのエネルギーが周りを明るくします。',
+          '遠くのことや未来のことに思いを巡らせると吉。大きな夢を描くほど引き寄せる力が強まります。',
+        ],
+        colors: ['パープル', 'ターコイズ', 'オレンジ', 'ブルー'],
+        items: ['地図', '旅グッズ', '矢モチーフ', 'エスニック柄'],
+      },
+    };
+
+    function getSign(month, day) {
+      const dates = [
+        [1,19,'山羊座'], [2,18,'水瓶座'], [3,20,'魚座'], [4,19,'牡羊座'],
+        [5,20,'牡牛座'], [6,20,'双子座'], [7,22,'蟹座'], [8,22,'獅子座'],
+        [9,22,'乙女座'], [10,22,'天秤座'], [11,21,'蠍座'], [12,21,'射手座'],
+      ];
+      for (const [m, d, name] of dates) {
+        if (month < m || (month === m && day <= d)) return name;
+      }
+      return '山羊座';
+    }
+
+    function getStars(seed, min, max) {
+      const val = min + (seed % (max - min + 1));
+      return '★'.repeat(val) + '☆'.repeat(5 - val);
+    }
+
+    function fortune() {
+      const bd = document.getElementById('birthdate').value;
+      if (!bd) { alert('生年月日を入力してね！'); return; }
+
+      const d = new Date(bd);
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+      const signName = getSign(month, day);
+
+      const sign = signs.find(s => s.name === signName);
+      const data = fortunes[signName];
+
+      // 今日の日付シードで運勢を決定
+      const today = new Date();
+      const seed = today.getFullYear() * 10000 + (today.getMonth()+1) * 100 + today.getDate() + month * 3 + day;
+
+      const msgIdx = seed % data.messages.length;
+      const colorIdx = seed % data.colors.length;
+      const itemIdx = (seed + 1) % data.items.length;
+      const luckyNum = (seed % 9) + 1;
+
+      document.getElementById('res-emoji').textContent = sign.emoji;
+      document.getElementById('res-name').textContent = signName;
+      document.getElementById('res-date').textContent = sign.keyword;
+      document.getElementById('res-overall').textContent = getStars(seed, 2, 5);
+      document.getElementById('res-love').textContent = getStars(seed + 1, 2, 5);
+      document.getElementById('res-money').textContent = getStars(seed + 2, 2, 5);
+      document.getElementById('res-health').textContent = getStars(seed + 3, 2, 5);
+      const colorData = {
+        'レッド':           { hex: '#e53935', msg: '情熱と行動力が高まる色。今日は積極的に動くことで道が開けます🔴' },
+        'オレンジ':         { hex: '#fb8c00', msg: '明るいエネルギーが満ちる色。コミュニケーションが活発になりそう🟠' },
+        'イエロー':         { hex: '#fdd835', msg: '知性と直感が冴える色。アイデアを形にするのに最適な日🌟' },
+        'サンイエロー':     { hex: '#f9a825', msg: '太陽のような輝きをまとう色。自信を持って表舞台へ🌞' },
+        'グリーン':         { hex: '#43a047', msg: '癒しと調和の色。心を整えながら自分のペースで前進を🌿' },
+        'モスグリーン':     { hex: '#558b2f', msg: '自然体でいられる色。焦らずじっくり取り組むと吉🌱' },
+        'ブルー':           { hex: '#1e88e5', msg: '冷静な判断力が増す色。直感を信じて行動するタイミング💙' },
+        'ライトブルー':     { hex: '#29b6f6', msg: '自由な発想が広がる色。新しいことへの扉が開きそう🩵' },
+        'エレクトリックブルー': { hex: '#0091ea', msg: '革新的なひらめきをもたらす色。常識にとらわれない発想を⚡' },
+        'ネイビー':         { hex: '#1a237e', msg: '誠実さと信頼の色。地道な努力が周囲の心を動かします🌊' },
+        'ターコイズ':       { hex: '#00bcd4', msg: '直感と癒しを同時にもたらす色。感性を信じて進んで🩵' },
+        'ラベンダー':       { hex: '#9575cd', msg: '感性が豊かになる色。美しいものに触れると運気が上がります💜' },
+        'パープル':         { hex: '#7b1fa2', msg: '神秘的な魅力が増す色。直感と洞察力がさえわたる一日🔮' },
+        'ピンク':           { hex: '#e91e8c', msg: '愛情運が高まる色。思いやりの行動が素敵な縁を引き寄せます💕' },
+        'パールピンク':     { hex: '#f8bbd0', msg: '優しさと女性らしさが輝く色。穏やかな気持ちで過ごして🌸' },
+        'ホットピンク':     { hex: '#f50057', msg: '情熱的な魅力が全開の色。恋愛運が急上昇しそう💖' },
+        'ホワイト':         { hex: '#f5f5f5', msg: '純粋さとリセットの色。新しいスタートを切るのに最適な日⚪' },
+        'シルバー':         { hex: '#9e9e9e', msg: '直感と洗練をもたらす色。冷静な判断が幸運を呼び込みます🩶' },
+        'ゴールド':         { hex: '#ffc107', msg: '豊かさと成功を引き寄せる色。自信を持って輝いていきましょう✨' },
+        'ベージュ':         { hex: '#d7ccc8', msg: '安定と落ち着きの色。自然体でいることが今日の幸運の鍵🤍' },
+        'ブラウン':         { hex: '#795548', msg: '信頼と安定の色。着実な積み重ねが大きな成果をもたらします🟤' },
+        'ブラック':         { hex: '#37474f', msg: '神秘と自信の色。内なる強さを信じて堂々と進んで🖤' },
+        'ダークグリーン':   { hex: '#2e7d32', msg: '深い知恵と安定の色。長期的な視点で行動するとうまくいきそう🌲' },
+        'ディープレッド':   { hex: '#b71c1c', msg: '強い意志と情熱の色。本気で向き合うことで道が開けます❤️' },
+        'クリーム':         { hex: '#fff9c4', msg: '温もりと包容力の色。周囲への優しさが幸運を呼び込みます🌼' },
+        'パールホワイト':   { hex: '#eceff1', msg: '純粋な直感が冴える色。夢や感覚を大切にして🤍' },
+        'シーブルー':       { hex: '#0277bd', msg: '深い感受性と直感の色。流れに身を委ねることで幸運が訪れます🌊' },
+        'ダークブラウン':   { hex: '#4e342e', msg: '根を張る力の色。地に足をつけた行動が結果を生みます🍂' },
+      };
+
+      const colorName = data.colors[colorIdx];
+      const cData = colorData[colorName] || { hex: '#9575cd', msg: 'このカラーをまとって、今日も素敵な一日を✨' };
+
+      document.getElementById('res-message-text').textContent = data.messages[msgIdx];
+      document.getElementById('res-color').textContent = colorName;
+      document.getElementById('res-color-circle').style.backgroundColor = cData.hex;
+      const cmEl = document.getElementById('res-color-message');
+      cmEl.textContent = '🎨 ' + cData.msg;
+      cmEl.style.color = '#f0e6ff';
+      document.getElementById('res-number').textContent = luckyNum;
+      document.getElementById('res-item').textContent = data.items[itemIdx];
+
+      // 背景に星座シンボルを表示
+      const bgSymbol = document.getElementById('bg-symbol');
+      bgSymbol.textContent = sign.emoji;
+      bgSymbol.style.opacity = '0.07';
+
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>
