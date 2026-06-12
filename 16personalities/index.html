@@ -399,6 +399,24 @@
       margin-top: 12px;
     }
     .share-btn:hover { background: #cf5608; }
+    .x-share-btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: #000000;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+      margin-top: 12px;
+      text-decoration: none;
+      text-align: center;
+    }
+    .x-share-btn:hover { background: #333333; }
 
     /* スタート画面 */
     #start-screen { text-align: center; }
@@ -569,7 +587,8 @@
       <div class="img-note">↑ 自分のタイプを探してみてね！</div>
     </div>
 
-    <button class="share-btn" onclick="shareResult()">結果をシェアする 📤</button>
+    <button class="share-btn" onclick="shareResult()">結果をコピーする 📋</button>
+    <a id="x-share-link" class="x-share-btn" href="#" target="_blank" rel="noopener">𝕏 でシェアする</a>
     <button class="retry-btn" onclick="resetQuiz()">もう一回やってみる 🔄</button>
   </div>
 
@@ -1077,6 +1096,7 @@ function showResult() {
   void rs.offsetWidth;
   rs.classList.add('fade-in');
   window.scrollTo(0, 0);
+  updateXShareLink();
 }
 
 function shareResult() {
@@ -1090,6 +1110,13 @@ function shareResult() {
   } else {
     prompt('このテキストをコピーしてシェアしてね！', text);
   }
+}
+
+function updateXShareLink() {
+  const name = document.getElementById('res-name').textContent;
+  const text = `私は「${name}」タイプでした！\nあなたも診断してみてね👇\n#かぶりこ度診断 @kaburiko_chan`;
+  const url = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
+  document.getElementById('x-share-link').href = url;
 }
 
 function resetQuiz() {
@@ -1112,6 +1139,9 @@ function resetQuiz() {
     <a href="https://store.line.me/stickershop/author/6156502/ja" target="_blank" class="shop-btn line">
       💬 LINEスタンプ
     </a>
+  </div>
+  <div style="margin-top: 12px;">
+    <a href="https://coord-fortune.github.io/coord-fortune/kaburiko-uranai/" target="_blank" style="font-size: 0.8rem; color: #b85c10; text-decoration: none;">🔮 今日のかぶりこちゃん占いはこちら</a>
   </div>
 </div>
 
